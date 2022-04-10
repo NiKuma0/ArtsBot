@@ -13,7 +13,7 @@ def create_artist():
     for i in range(3):
         Artist.create(
             person=i+1,
-            description='Test info for User {i}. This text can be useful for user who see it'
+            description=f'Test info for User {i}. This text can be useful for user who see it'
         )
 
 

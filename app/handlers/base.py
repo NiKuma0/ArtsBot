@@ -24,21 +24,25 @@ async def cancel(data: types.Message | types.CallbackQuery, state: FSMContext):
     await state.finish()
     text = 'Отменено! Чтобы открать меню, нажмите /start'
     if isinstance(data, types.CallbackQuery):
-        await data.message.edit_text(text)
+        await data.message.answer(text)
+        await data.message.delete()
     if isinstance(data, types.Message):
         await data.answer(text)
 
 
-async def reg_user(message: types.Message, state: FSMContext):
+async def reg_user(message: types.Message):
     user = message.from_user
     _, created = Person.get_or_create(
         id=user.id,
-        name=user.username,
-        real_name=user.full_name
+        defaults=dict(
+            name=user.username,
+            real_name=user.full_name
+        )
     )
-    if created:
-        return await message.answer('Теперь вы в бд!')
-    await message.answer('Вы уже в бд!')
+    if not created:
+        return await message.answer('Вы уже в бд!')
+    
+    await message.answer('Теперь вы в бд!')
 
 
 def register_base_handler(dp: Dispatcher):

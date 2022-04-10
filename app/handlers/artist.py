@@ -4,7 +4,8 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
-from db.models import Artist, Person, Message
+from db.models import Artist, Person
+from app import bot
 
 
 logger = logging.getLogger(__name__)
@@ -16,11 +17,15 @@ class SetProfile(StatesGroup):
     wait_done = State()
 
 
+class MessageAnswer(StatesGroup):
+    answer = State()
+
+
 async def artist_start(message: types.Message):
     keyboard = types.InlineKeyboardMarkup(row_width=1)
     keyboard.add(
         types.InlineKeyboardButton(
-            'Показать последнии сообщения', callback_data='last_messages'
+            'Ваши заказы', callback_data='artist_orders'
         ),
         types.InlineKeyboardButton(
             'Перезаполнить профиль', callback_data='profile'
@@ -81,26 +86,6 @@ async def save_profile(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_text('Профиль изменён! Чтобы открать меню нажмите /start')
 
 
-async def last_messages(call: types.CallbackQuery, state: FSMContext):
-    await call.message.edit_text('Последние сообщения: ')
-    person = Person.get_by_id(call.from_user.id)
-    artist: Artist = person.artist.first()
-    messages: list[Message] = Message.select().where(Artist == artist).order_by(Message.date)
-    if not messages:
-        await call.message.answer('У вас нет сообщений')
-    for message in messages:
-        keyboard = types.InlineKeyboardMarkup()
-        keyboard.add(
-            types.InlineKeyboardButton(
-                'Ответить', callback_data=f'answer_message_{message.id}'
-            )
-        )
-        await call.message.answer(
-            f'Сообщение от @{message.user.name}\n{message.text}',
-            reply_markup=keyboard
-        )
-
-
 def register_artist_handler(dp: Dispatcher):
     dp.register_callback_query_handler(profile, lambda c: c.data == 'profile')
     dp.register_message_handler(set_name, state=SetProfile.name)
@@ -109,7 +94,4 @@ def register_artist_handler(dp: Dispatcher):
         save_profile,
         lambda c: c.data == 'save_profile',
         state=SetProfile.wait_done
-    )
-    dp.register_callback_query_handler(
-        last_messages, lambda c: c.data == 'last_messages'
     )

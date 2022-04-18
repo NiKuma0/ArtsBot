@@ -1,4 +1,7 @@
+import asyncio
+
 from aiogram import types, Dispatcher
+from aiogram.dispatcher import FSMContext
 from aiogram.utils.callback_data import CallbackData
 
 from db.models import Artist, Person
@@ -34,7 +37,7 @@ async def user_start(message: types.Message):
     )
 
 
-async def show_artist(call: types.CallbackQuery, callback_data: dict):
+async def show_artist(call: types.CallbackQuery, callback_data: dict, state: FSMContext):
     count_artist = Artist.select().count()
     artists = list(Artist.select().order_by(Artist.id))
     index_artist = int(callback_data['index'])
@@ -56,6 +59,20 @@ async def show_artist(call: types.CallbackQuery, callback_data: dict):
         ),
     )
     await call.answer('Переключаю ...')
+
+    data = await state.get_data()
+    photo_messages: list[types.Message] = data.get('photo_messages', [])
+    await state.reset_data()
+    await asyncio.gather(
+        *[bot.delete_message(call.from_user.id, message.message_id)
+        for message in photo_messages]
+    )
+    if artist.photos:
+        photo_messages = await call.message.answer_media_group(
+            [types.InputMediaPhoto(photo.file_id) for photo in artist.photos]
+        )
+        await state.update_data({'photo_messages': photo_messages})
+
     await call.message.edit_text(
         f'Художник #{index_artist};\n'
         f'Имя: {artist.person.real_name}\n'

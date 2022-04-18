@@ -37,16 +37,14 @@ class Comment(BaseModel):
     from_person = peewee.ForeignKeyField(Person, backref='comments')
     order = peewee.ForeignKeyField(Order, backref='comments')
 
+    def __str__(self):
+        return f'От {self.from_person.real_name}:\n- {self.text}'
 
-class Message(BaseModel):
-    text = peewee.TextField()
-    from_person = peewee.ForeignKeyField(Person, backref='messages')
-    date = peewee.DateTimeField()
-    read = peewee.BooleanField(default=False)
 
-    def __repr__(self) -> str:
-        return f'<{type(self).__name__} {self.user.name} to {self.artist.person.name}>'
+class Photo(BaseModel):
+    file_id = peewee.CharField(max_length=400, primary_key=True)
+    artist = peewee.ForeignKeyField(Artist, backref='photos')
 
 
 def create_tables():
-    database.create_tables((Artist, Person, Message, Order, Comment))
+    database.create_tables((Artist, Person, Photo, Order, Comment))

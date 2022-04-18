@@ -4,9 +4,10 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher.filters import Text
 from aiogram.utils.callback_data import CallbackData
 
-from db.models import Person, Order, Artist
+from db.models import Person, Order, Artist, Comment
 from .comments import comment_data
 from app import bot
+from app.tools import notify
 
 
 order_data = CallbackData('order', 'id', 'action')
@@ -35,7 +36,7 @@ async def send_orders(orders: list[Order], user_id) -> types.InlineKeyboardMarku
 
 async def get_order(message: types.Message, *args):
     order_id = message.text.removeprefix('/order_')
-    order = Order.get_by_id(order_id)
+    order: Order = Order.get_by_id(order_id)
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(
         types.InlineKeyboardButton(
@@ -47,7 +48,8 @@ async def get_order(message: types.Message, *args):
         f'Исполнитель: {order.executor.person.real_name}\n'
         f'Заказчик: {order.client.real_name}\n'
         f'Описание заказа: {order.description}\n\n'
-        f'Последний комментарий :',
+        'Последний комментарий: \n'
+        f'{order.comments.order_by(Comment.date.desc()).first()}',
         reply_markup=keyboard
     )
 
@@ -62,9 +64,7 @@ async def client_orders(call: types.CallbackQuery):
 async def artist_orders(call: types.CallbackQuery):
     person: Person = Person.get_by_id(call.from_user.id)
     orders = person.artist.first().orders
-    if not orders:
-        return await call.answer('У вас нет заказов')
-    keyboard = await send_orders(orders)
+    keyboard = await send_orders(orders, person.id)
     await call.message.edit_text(
         'Ваши заказы:', reply_markup=keyboard
     )
@@ -98,11 +98,12 @@ async def new_order_set_description(message: types.Message, state: FSMContext):
 async def new_order_done(call: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     await state.finish()
-    Order.create(
+    order = Order.create(
         description=data['description'],
         client=call.from_user.id,
         executor=data['artist'],
     )
+    await notify(call.from_user.id, order, 'Новый заказ')
     await call.message.answer('Готово! Нажмите /start чтобы попасть в меню')
     await call.message.delete()
 

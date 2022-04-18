@@ -1,12 +1,10 @@
-import logging
-
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.dispatcher.filters import Text
 from aiogram.utils.callback_data import CallbackData
 
-from db.models import Person, Order, Artist, Comment
+from db.models import Order, Comment
+from app.tools import notify
 from app import bot
 
 
@@ -22,7 +20,6 @@ async def show_comments(call: types.CallbackQuery, callback_data: dict):
         order = Order.get_by_id(callback_data['order_id'])
     except Order.DoesNotExist:
         return await call.answer('Заказ не найден')
-    text = ''
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(
         types.InlineKeyboardButton(
@@ -31,11 +28,8 @@ async def show_comments(call: types.CallbackQuery, callback_data: dict):
     )
     if not order.comments:
         text = 'Комментариев нет'
-    for comment in order.comments:
-        text += (
-            f'От {comment.from_person.real_name}\n'
-            f'{comment.text}\n\n'
-        )
+    else:
+        text = '\n\n'.join(list(map(str, order.comments)))
     await call.message.delete()
     await call.message.answer(
         text, reply_markup=keyboard
@@ -43,7 +37,8 @@ async def show_comments(call: types.CallbackQuery, callback_data: dict):
 
 
 async def new_comment(call: types.CallbackQuery, callback_data: dict, state: FSMContext):
-    await state.update_data({'order_id': callback_data['order_id']})
+    order = Order.get_by_id(callback_data['order_id'])
+    await state.update_data({'order': order})
     await call.message.answer('Напишите: ')
     await NewComment.wait_text.set()
 
@@ -55,8 +50,9 @@ async def push_comment(message: types.Message, state: FSMContext):
         date=message.date,
         text=message.text,
         from_person=message.from_user.id,
-        order=data['order_id']
+        order=data['order']
     )
+    await notify(message.from_user.id, data['order'])
     await message.answer('Готово! /start')
 
 

@@ -5,7 +5,8 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 from app import bot
 from db.models import create_tables
-from app.handlers import __all__
+from app.handlers import __all__ as handlers
+from app.middlewares import AlbumMiddleware
 
 
 logger_file_handler = logging.FileHandler('bot.log')
@@ -24,8 +25,9 @@ logging.basicConfig(
 
 def main():
     dp = Dispatcher(bot, storage=MemoryStorage())
+    dp.middleware.setup(AlbumMiddleware())
     create_tables()
-    [func(dp) for func in __all__]
+    [func(dp) for func in handlers]
     executor.start_polling(dp)
 
 

@@ -1,2 +1,1 @@
-TOKEN = '5267502584:AAEQIR3C0hSsrRsY3Qy5t0_SwC5C15mQaNc'  # noqa
-ADMINS_NAME = ('NiKuma0',)
+

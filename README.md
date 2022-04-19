@@ -8,7 +8,7 @@
     ```shell
     $ docker --version; docker-compose --version
     ```
-    Если нет, установите с 
+    Если Docker-а нет, установите с 
     [официального сайта](https://docker.com)
 2. Скопируйте файл [`docker-compose.yaml`](docker-compose.yaml)
 на ваш сервер.

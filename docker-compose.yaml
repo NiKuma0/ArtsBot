@@ -1,0 +1,12 @@
+version: '3.9'
+
+services:
+  bot:
+    build: .
+    volumes:
+      - db:/home/app/web/sqlite
+    env_file:
+      - .env
+
+volumes:
+  db:

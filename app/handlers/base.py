@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 async def main_start(message: types.Message, state: FSMContext):
+    await state.reset_data()
     await state.finish()
     name = message.from_user.username
     if Artist.select().join(Person).where(Person.name == name).exists():
@@ -41,7 +42,6 @@ async def reg_user(message: types.Message):
     )
     if not created:
         return await message.answer('Вы уже в бд!')
-    
     await message.answer('Теперь вы в бд!')
 
 

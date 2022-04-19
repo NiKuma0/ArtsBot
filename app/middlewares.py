@@ -22,15 +22,15 @@ class AlbumMiddleware(BaseMiddleware):
         if not message.media_group_id:
             return
 
-        try:
+        extra = self.album_data.setdefault(message.media_group_id, [])
+        if extra:
             self.album_data[message.media_group_id].append(message)
             raise CancelHandler()
-        except KeyError:
-            self.album_data[message.media_group_id] = [message]
-            await asyncio.sleep(self.latency)
-
-            message.conf["is_last"] = True
-            data["album"] = self.album_data[message.media_group_id]
+        
+        self.album_data[message.media_group_id] = [message]
+        await asyncio.sleep(self.latency)
+        message.conf["is_last"] = True
+        data["album"] = self.album_data[message.media_group_id]
 
     async def on_post_process_message(self, message: types.Message, result: dict, data: dict):
         """Clean up after handling our album."""

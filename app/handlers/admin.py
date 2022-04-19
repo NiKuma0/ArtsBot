@@ -47,10 +47,13 @@ async def delete_artist(message: types.Message, command: filters.Command.Command
             parse_mode='markdownV2'
         )
     username = command.args.removeprefix('@')
-    person = Person.get(Person.name == username)
+    try:
+        person = Person.get(Person.name == username)
+    except Person.DoesNotExist:
+        return await message.answer('Пользователь не найден!')
     artist = person.artist.first()
     if not artist:
-        return await message.answer('Пользаватель не найден!')
+        return await message.answer('Пользователь не художник!')
     artist.delete().execute()
     await message.answer('Готово!')
 

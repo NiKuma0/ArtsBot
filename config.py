@@ -1,3 +1,7 @@
-# TOKEN = '5267502584:AAEQIR3C0hSsrRsY3Qy5t0_SwC5C15mQaNc'  # noqa
-TOKEN = '5227950084:AAGT8U7L-UtrVuaRNTLDj3T9rso1Y0J7HPU'
-ADMINS_NAME = ('NiKuma0', 'RetroSilla')
+import os
+
+
+TOKEN = os.getenv('TOKEN')
+if not TOKEN:
+    raise 'Создайте файл .env'
+ADMINS_NAME = os.getenv('ADMINS_NAME')

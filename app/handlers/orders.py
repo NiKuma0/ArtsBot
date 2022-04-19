@@ -1,5 +1,6 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.handler import CancelHandler
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher.filters import Text
 from aiogram.utils.callback_data import CallbackData
@@ -8,6 +9,7 @@ from db.models import Person, Order, Artist, Comment
 from .comments import comment_data
 from app import bot
 from app.tools import notify
+from config import ADMINS_NAME
 
 
 order_data = CallbackData('order', 'id', 'action')
@@ -16,6 +18,33 @@ order_data = CallbackData('order', 'id', 'action')
 class NewOrder(StatesGroup):
     wait_description = State()
     done = State()
+
+
+class OrderFilter(Text):
+    async def check(self, obj: types.Message):
+        result = await super().check(obj)
+        if not result:
+            return result
+        order = await self.get_order(obj)
+        await self.has_perm(obj, order)
+        return {'order': order}
+    
+    async def get_order(self, message: types.Message) -> Order:
+        order_id = message.text.removeprefix(self.startswith[0])
+        try:
+            order: Order = Order.get_by_id(order_id)
+        except Order.DoesNotExist:
+            await message.answer('Заказ не найден!')
+            raise CancelHandler()
+        return order
+    
+    async def has_perm(self, message: types.Message, order: Order):
+        user = message.from_user
+        if user.id in (order.client, order.executor) or user.username in ADMINS_NAME:
+            return True
+        await message.answer('У вас нет доступа к этому заказу')
+        raise CancelHandler
+
 
 
 async def send_orders(orders: list[Order], user_id) -> types.InlineKeyboardMarkup:
@@ -34,13 +63,11 @@ async def send_orders(orders: list[Order], user_id) -> types.InlineKeyboardMarku
     )
 
 
-async def get_order(message: types.Message, *args):
-    order_id = message.text.removeprefix('/order_')
-    order: Order = Order.get_by_id(order_id)
+async def get_order(message: types.Message, order: Order):
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(
         types.InlineKeyboardButton(
-            'Коммментарии', callback_data=comment_data.new(order_id=order_id, action='show_comments')
+            'Коммментарии', callback_data=comment_data.new(order_id=order.id, action='show_comments')
         ),
     )
     await message.answer(
@@ -103,7 +130,7 @@ async def new_order_done(call: types.CallbackQuery, state: FSMContext):
         client=call.from_user.id,
         executor=data['artist'],
     )
-    await notify(call.from_user.id, order, 'Новый заказ')
+    await notify(call.from_user.id, order, f'Новый заказ /order_{order.id}')
     await call.message.answer('Готово! Нажмите /start чтобы попасть в меню')
     await call.message.delete()
 
@@ -125,5 +152,5 @@ def register_orders_handler(dp: Dispatcher):
         new_order_done, order_data.filter(action='done'), state=NewOrder.done
     )
     dp.register_message_handler(
-        get_order, Text(startswith='/order_')
+        get_order, OrderFilter(startswith='/order_')
     )

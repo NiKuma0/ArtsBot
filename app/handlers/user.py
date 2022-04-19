@@ -39,6 +39,10 @@ async def user_start(message: types.Message):
 
 async def show_artist(call: types.CallbackQuery, callback_data: dict, state: FSMContext):
     count_artist = Artist.select().count()
+    if count_artist == 0:
+        return await call.message.edit_text(
+            'Здесь пока нет художников('
+        )
     artists = list(Artist.select().order_by(Artist.id))
     index_artist = int(callback_data['index'])
     index_artist = (index_artist % count_artist) if index_artist != 0 else 0

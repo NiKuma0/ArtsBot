@@ -7,9 +7,9 @@ from .comments import register_comments_handler
 
 __all__ = (
     register_base_handler,
-    register_user_handlers,
     register_admin_handler,
+    register_user_handlers,
     register_artist_handler,
     register_orders_handler,
-    register_comments_handler
+    register_comments_handler,
 )

@@ -52,7 +52,7 @@ async def push_comment(message: types.Message, state: FSMContext):
         from_person=message.from_user.id,
         order=data['order']
     )
-    await notify(message.from_user.id, data['order'])
+    await notify(message.from_user.id, data['order'], f'Новый комментарий /order_{data["order"].id}')
     await message.answer('Готово! /start')
 
 

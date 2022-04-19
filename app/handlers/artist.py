@@ -73,10 +73,10 @@ async def set_photos(message: types.Message, state: FSMContext, album: list[type
         ),
     )
 
-    photos = []
-    for message in album:
-        file_id = message.photo[-1].file_id
-        photos.append(file_id)
+    photos = [
+        album_message.photo[-1].file_id
+        for album_message in album
+    ]
     await state.update_data({'photos': photos})
 
     await message.answer_media_group(
@@ -99,7 +99,7 @@ async def save_profile(call: types.CallbackQuery, state: FSMContext):
     artist: Artist = person.artist.first()
     person.real_name = data['artist_name']
     artist.description = data['artist_description']
-    Photo.delete().where(Photo.artist == artist)
+    Photo.delete().where(Photo.artist == artist.id).execute()
     for photo_id in data['photos']:
         Photo.create(
             file_id=photo_id, artist=artist
@@ -115,7 +115,6 @@ def register_artist_handler(dp: Dispatcher):
     dp.register_message_handler(set_description, state=SetProfile.description)
     dp.register_message_handler(
         set_photos,
-        is_media_group=True,
         content_types='photo',
         state=SetProfile.photos,
     )

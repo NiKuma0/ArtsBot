@@ -46,7 +46,7 @@ async def reg_user(message: types.Message):
 
 
 def register_base_handler(dp: Dispatcher):
-    dp.register_message_handler(main_start, commands=('start',))
-    dp.register_message_handler(cancel, commands='cancel')
+    dp.register_message_handler(main_start, commands='start', state='*')
+    dp.register_message_handler(cancel, commands='cancel', state='*')
     dp.register_callback_query_handler(cancel, lambda call: call.data == 'cancel')
     dp.register_message_handler(reg_user, commands='reg_user')

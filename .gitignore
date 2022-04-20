@@ -4,3 +4,4 @@ __pycache__
 bot.db
 bot.log
 .env
+sqlite/

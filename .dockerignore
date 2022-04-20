@@ -1,7 +1,7 @@
 venv/
 __pycache__
 .vscode
-bot.db
+sqlite/
 bot.log
 .git
 .gitignore

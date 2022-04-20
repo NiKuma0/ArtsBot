@@ -71,18 +71,19 @@ async def show_artist(call: types.CallbackQuery, callback_data: dict, state: FSM
         *[bot.delete_message(call.from_user.id, message.message_id)
         for message in photo_messages]
     )
+    await call.message.delete()
+    await call.message.answer(
+        f'Художник #{index_artist};\n'
+        f'Имя: {artist.person.real_name}\n'
+        f'Описания: {artist.description}',
+        reply_markup=keyboard
+    )
     if artist.photos:
         photo_messages = await call.message.answer_media_group(
             [types.InputMediaPhoto(photo.file_id) for photo in artist.photos]
         )
         await state.update_data({'photo_messages': photo_messages})
 
-    await call.message.edit_text(
-        f'Художник #{index_artist};\n'
-        f'Имя: {artist.person.real_name}\n'
-        f'Описания: {artist.description}',
-        reply_markup=keyboard
-    )
 
 
 def register_user_handlers(dp: Dispatcher):

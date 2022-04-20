@@ -40,16 +40,16 @@ class OrderFilter(Text):
     
     async def has_perm(self, message: types.Message, order: Order):
         user = message.from_user
-        if user.id in (order.client, order.executor) or user.username in ADMINS_NAME:
+        if user.id in (order.client, order.executor.person) or user.username in ADMINS_NAME:
             return True
         await message.answer('У вас нет доступа к этому заказу')
-        raise CancelHandler
+        raise CancelHandler()
 
 
 
 async def send_orders(orders: list[Order], user_id) -> types.InlineKeyboardMarkup:
     if not orders:
-        return bot.send_message(user_id, 'У вас нет заказов')
+        return await bot.send_message(user_id, 'У вас нет заказов')
     text = 'Ваши заказы: \n'
     for order in orders:
         text += (
@@ -91,10 +91,8 @@ async def client_orders(call: types.CallbackQuery):
 async def artist_orders(call: types.CallbackQuery):
     person: Person = Person.get_by_id(call.from_user.id)
     orders = person.artist.first().orders
-    keyboard = await send_orders(orders, person.id)
-    await call.message.edit_text(
-        'Ваши заказы:', reply_markup=keyboard
-    )
+    await send_orders(orders, person.id)
+    await call.message.delete()
 
 
 async def new_order(call: types.CallbackQuery, callback_data: dict, state: FSMContext):

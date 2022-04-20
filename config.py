@@ -1,7 +1,10 @@
 import os
 
+def env(NAME: str):
+    result = os.getenv(NAME)
+    if not result:
+        raise ValueError(f'Не задана переменная окружения: "{NAME}"')
+    return result
 
-TOKEN = os.getenv('TOKEN')
-if not TOKEN:
-    raise 'Создайте файл .env'
-ADMINS_NAME = os.getenv('ADMINS_NAME')
+TOKEN = env('TOKEN')
+ADMINS_NAME = [env('ADMIN_NAME')]

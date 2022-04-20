@@ -60,7 +60,7 @@ async def set_description(message: types.Message, state: FSMContext):
     await message.answer('Теперь пришли мне фото примеров работ')
 
 
-async def set_photos(message: types.Message, state: FSMContext, album: list[types.Message]):
+async def set_photos(message: types.Message, state: FSMContext, album: list[types.Message]=[]):
     data = await state.get_data()
     await SetProfile.wait_done.set()
     keyboard = types.InlineKeyboardMarkup()
@@ -77,6 +77,8 @@ async def set_photos(message: types.Message, state: FSMContext, album: list[type
         album_message.photo[-1].file_id
         for album_message in album
     ]
+    if not album:
+        photos = [message.photo[-1].file_id]
     await state.update_data({'photos': photos})
 
     await message.answer_media_group(

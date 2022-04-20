@@ -35,7 +35,9 @@ async def add_artist(message: types.Message, command: filters.Command.CommandObj
         person = Person.get(Person.name == username)
     except Person.DoesNotExist:
         return await message.answer('Пользаватель не найден!')
-    Artist.create(person=person)
+    _, created = Artist.get_or_create(person=person)
+    if not created:
+        return await message.answer('Этот пользаватель уже Художник!')
     await message.answer('Готово!')
 
 
@@ -55,6 +57,18 @@ async def delete_artist(message: types.Message, command: filters.Command.Command
     if not artist:
         return await message.answer('Пользователь не художник!')
     artist.delete().execute()
+    await message.answer('Готово!')
+
+
+async def add_admin(message: types.Message, command: filters.Command.CommandObj):
+    if not command.args:
+        return await message.answer(
+            'Передайте имя пользавателя\n'
+            '```\n\/add\_admin @<username>```',
+            parse_mode='markdownV2'
+        )
+    username = command.args.removeprefix('@')
+    ADMINS_NAME.append(username)
     await message.answer('Готово!')
 
 
@@ -89,12 +103,10 @@ async def create_photo(message: types.Message, state: FSMContext, album: list[ty
 async def bot_help(message: types.Message):
     text = (
         '\/help \- Вызывает это сообщение\.\n'
-        '\/reg\_user \- Добавляет вас в БД\.\n'
         'Команды для Админа:\n'
         '\/add\_artist \- Делает пользавателя Художником\.\n'
         '```\n\/add\_artist @<username>```\n'
-        '*Чтобы комманда сработала, нужно чтобы пользаватель был в БД\.* '
-        'Для этого он должен написать боту комманду \/reg\_user'
+        '*Чтобы комманда сработала, нужно чтобы пользаватель запустил бот\.* '
     )
     await message.answer(
         text,
@@ -108,3 +120,4 @@ def register_admin_handler(dp: Dispatcher):
     dp.register_message_handler(delete_artist, filters.Command('delete_artist'), admin_filter)
     dp.register_message_handler(add_photo, filters.Command('add_photo'), admin_filter)
     dp.register_message_handler(create_photo, state=AddPhoto.wait_photo, content_types='photo')
+    dp.register_message_handler(add_admin, commands='add_admin')

@@ -39,6 +39,7 @@ async def show_comments(call: types.CallbackQuery, callback_data: dict):
 async def new_comment(call: types.CallbackQuery, callback_data: dict, state: FSMContext):
     order = Order.get_by_id(callback_data['order_id'])
     await state.update_data({'order': order})
+    await call.message.delete()
     await call.message.answer('Напишите: ')
     await NewComment.wait_text.set()
 

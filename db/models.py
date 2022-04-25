@@ -27,8 +27,15 @@ class Order(BaseModel):
     description = peewee.TextField()
     client = peewee.ForeignKeyField(Person, backref='orders')
     executor = peewee.ForeignKeyField(Artist, backref='orders')
-    status = peewee.CharField(null=True)
+    status = peewee.CharField(default='Художник ещё не приступил к работе')
+    photo_file_id = peewee.CharField(max_length=400, null=True)
     done = peewee.BooleanField(default=False)
+    
+    def __repr__(self) -> str:
+        return (
+            f'<{type(self).__name__} id={self.id}, '
+            f'{self.description[:15]}{"..." if len(self.description) > 15 else ""}>'
+        )
 
 
 class Comment(BaseModel):

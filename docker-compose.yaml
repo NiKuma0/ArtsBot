@@ -5,6 +5,7 @@ services:
     image: nikuma0/artsbot:latest
     volumes:
       - db:/home/app/web/sqlite
+    restart: always
     env_file:
       - .env
   watchtower:

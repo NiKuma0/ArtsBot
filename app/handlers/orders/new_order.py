@@ -60,9 +60,9 @@ async def order_change_or_create(call: types.CallbackQuery, state: FSMContext):
     order.save()
     await notify(
         call.from_user.id, order,
-        state_data.get('client_message'),
-        state_data.get('executor_message'),
-        state_data.get('admin_message'),
+        state_data.get('client_message', ''),
+        state_data.get('executor_message', ''),
+        state_data.get('admin_message', ''),
     )
     await call.message.answer(
         'Заказ сделан, вы можете в любое время посмотреть его статус и/или изменить '

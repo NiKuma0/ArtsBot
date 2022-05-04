@@ -1,15 +1,11 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import filters
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import State, StatesGroup
 
 from db.models import Artist, Person, Photo
 from app import bot
+from app.filters.states import AddPhoto
 from config import ADMINS_NAME
-
-
-class AddPhoto(StatesGroup):
-    wait_photo = State()
 
 
 def admin_filter(message: types.Message):

@@ -4,7 +4,6 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 
 from db.models import Artist, Person
-from app import bot
 from .user import user_start
 from .artist import artist_start
 

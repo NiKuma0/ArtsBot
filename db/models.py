@@ -1,8 +1,38 @@
 import datetime
 
 import peewee
+from aiogram.types import PhotoSize
 
 from db import BaseModel, database
+
+
+class Photo(BaseModel):
+    file_id = peewee.TextField()
+    file_unique_id = peewee.CharField()
+    width = peewee.SmallIntegerField()
+    height = peewee.SmallIntegerField()
+    file_size = peewee.IntegerField()
+
+    @classmethod
+    def from_photosize(cls, photosize: PhotoSize, create=True):
+        photo = cls(
+            **dict(photosize)
+        )
+        photo.save() if create else None
+        return photo
+
+    @classmethod
+    def create_album(cls, album: list[PhotoSize]):
+        return [cls.from_photosize(photosize) for photosize in album]
+
+    def get_as_photosize(self) -> PhotoSize:
+        return PhotoSize(
+            file_id=self.file_id,
+            file_unique_id=self.file_unique_id,
+            width=self.width,
+            height=self.height,
+            file_size=self.file_size,
+        )
 
 
 class Person(BaseModel):
@@ -17,9 +47,13 @@ class Person(BaseModel):
 class Artist(BaseModel):
     description = peewee.TextField(null=True)
     person = peewee.ForeignKeyField(Person, backref='artist', unique=True)
+    photos = peewee.ManyToManyField(Photo, backref='artist',)
 
     def __repr__(self) -> str:
         return f'<{type(self).__name__} @{self.person.name}>'
+
+
+ArtistPhotos = Artist.photos.get_through_model()
 
 
 class Order(BaseModel):
@@ -28,14 +62,23 @@ class Order(BaseModel):
     client = peewee.ForeignKeyField(Person, backref='orders')
     executor = peewee.ForeignKeyField(Artist, backref='orders')
     status = peewee.CharField(default='Художник ещё не приступил к работе')
-    photo_file_id = peewee.CharField(max_length=400, null=True)
-    done = peewee.BooleanField(default=False)
-    
+    price = peewee.SmallIntegerField(null=True)
+    paid = peewee.BooleanField(default=False)
+    expample_photo = peewee.ForeignKeyField(Photo, backref='order_example_photo', null=True)
+    result_photos = peewee.ManyToManyField(Photo, backref='order_result_photos',)
+
+    @property
+    def done(self) -> bool:
+        return self.result_photos.exists()
+ 
     def __repr__(self) -> str:
         return (
             f'<{type(self).__name__} id={self.id}, '
             f'{self.description[:15]}{"..." if len(self.description) > 15 else ""}>'
         )
+
+
+OrderResultPhotos = Order.result_photos.get_through_model()
 
 
 class Comment(BaseModel):
@@ -48,10 +91,8 @@ class Comment(BaseModel):
         return f'От {self.from_person.real_name}:\n- {self.text}'
 
 
-class Photo(BaseModel):
-    file_id = peewee.CharField(max_length=400, primary_key=True)
-    artist = peewee.ForeignKeyField(Artist, backref='photos')
-
-
 def create_tables():
-    database.create_tables((Artist, Person, Photo, Order, Comment))
+    database.create_tables((
+        Artist, Person, Photo, Order,
+        Comment, ArtistPhotos, OrderResultPhotos,
+    ))

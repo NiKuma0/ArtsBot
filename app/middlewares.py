@@ -4,6 +4,36 @@ from aiogram import types
 from aiogram.dispatcher.handler import CancelHandler
 from aiogram.dispatcher.middlewares import BaseMiddleware
 
+from db.models import Person
+
+
+class UserUpdate(BaseMiddleware):
+    """Update the user if username has been changed."""
+    async def on_process_update(self, update: types.Update, data: dict):
+        user: types.User = None
+        match update:
+            case types.Update(message=message) if message:
+                user = message.from_user
+            case types.Update(callback_query=call) if call:
+                user = call.from_user
+            case types.Update(pre_checkout=pre_checkout) if pre_checkout:
+                user = pre_checkout.from_user
+            case _:
+                return
+        try:
+            person = Person.get_by_id(user.id) 
+        except Person.DoesNotExist:
+            person = Person.create(
+                id=user.id,
+                name=user.username,
+                real_name=user.full_name,
+            )
+        else:
+            if person.name != user.username:
+                person.name = user.username
+                person.save()
+        data['person'] = person
+        
 
 class AlbumMiddleware(BaseMiddleware):
     """This middleware is for capturing media groups."""

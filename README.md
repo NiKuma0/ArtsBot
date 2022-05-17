@@ -18,3 +18,34 @@
     ```shell
     $ sudo docker-compose up -d
     ```
+
+# Как развернуть с помощью Docker (второй способ)
+1. Убедитесь что у вас установлен Docker и Docker-Compose:
+    ```shell
+    $ docker --version; docker-compose --version
+    ```
+    Если Docker-а нет, установите с 
+    [официального сайта](https://docker.com)
+2. Клонируйте репозиторий на ваш сервер.
+3. Добавьте, в туже папку, файл `.env`, 
+наполните его как в [примере](.env_example)
+4. Запустите
+    ```shell
+    $ sudo docker-compose -f docker-compose.local.yaml up -d
+    ```
+
+# Как развернуть локально (Не рекомендуется: нужен для тестов)
+1. Клонируйте репозиторий на ваш сервер.
+2. Сконфигурируйте окружение как в [примере](.env_example), с помощью команды:
+    ```shell
+    $ export <SOME_KEY>=<SOME_VALUE>
+    ```
+3. Установите окружение python (3.10), активируйте его и установите 
+пакеты:
+    ```shell
+    $ pip install -r requirements.txt
+    ```
+4. Запустите
+    ```shell
+    $ python main.py
+    ```

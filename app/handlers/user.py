@@ -2,14 +2,10 @@ import asyncio
 
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
-from aiogram.utils.callback_data import CallbackData
 
 from db.models import Artist, Person
 from app import bot
-from .orders import order_data
-
-
-artist_callback = CallbackData('artist', 'index', 'action')
+from app.filters.callbacks import order_data, artist_callback
 
 
 async def user_start(message: types.Message):
@@ -59,7 +55,7 @@ async def show_artist(call: types.CallbackQuery, callback_data: dict, state: FSM
         ),
         types.InlineKeyboardButton(
             'Сделать заказ у художника',
-            callback_data=order_data.new(id=artist.id, action='new_order')
+            callback_data=order_data.new(order_id=artist.id, action='new_order')
         ),
     )
     await call.answer('Переключаю ...')

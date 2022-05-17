@@ -1,25 +1,14 @@
 from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.utils.callback_data import CallbackData
 
 from db.models import Order, Comment
-from app.tools import notify
+from app.utils import notify
+from app.filters.states import NewComment
+from app.filters.callbacks import comment_data
 from app import bot
 
 
-comment_data = CallbackData('comments', 'order_id', 'action')
-
-
-class NewComment(StatesGroup):
-    wait_text = State()
-
-
-async def show_comments(call: types.CallbackQuery, callback_data: dict):
-    try:
-        order = Order.get_by_id(callback_data['order_id'])
-    except Order.DoesNotExist:
-        return await call.answer('Заказ не найден')
+async def show_comments(call: types.CallbackQuery, order: Order):
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(
         types.InlineKeyboardButton(
@@ -36,10 +25,10 @@ async def show_comments(call: types.CallbackQuery, callback_data: dict):
     )
 
 
-async def new_comment(call: types.CallbackQuery, callback_data: dict, state: FSMContext):
-    order = Order.get_by_id(callback_data['order_id'])
+async def new_comment(call: types.CallbackQuery, order: Order, state: FSMContext):
     await state.update_data({'order': order})
-    await call.message.answer('Напишите: ')
+    await call.message.delete()
+    await call.message.answer('Напишите комментарий:')
     await NewComment.wait_text.set()
 
 
@@ -52,7 +41,12 @@ async def push_comment(message: types.Message, state: FSMContext):
         from_person=message.from_user.id,
         order=data['order']
     )
-    await notify(message.from_user.id, data['order'], f'Новый комментарий /order_{data["order"].id}')
+    await notify(
+        message.from_user.id, data['order'], 
+        'Новый комментарий /order_{order.id}',
+        'Новый комментарий /order_{order.id}',
+        'Новый комментарий /order_{order.id}',
+    )
     await message.answer('Готово! /start')
 
 
